@@ -1,0 +1,31 @@
+{
+  "name": "@kanjianmusic/vite-plugin-third-party-injector",
+  "version": "0.1.0",
+  "description": "Vite plugin for injecting third-party scripts into HTML files, such as gtag, gtm, etc.",
+  "scripts": {
+    "build": "tsup"
+  },
+  "main": "./dist/main.js",
+  "module": "./dist/main.mjs",
+  "types": "./dist/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/main.d.ts",
+      "import": "./dist/main.mjs",
+      "require": "./dist/main.js"
+    }
+  },
+  "author": "cuiguojie@kanjian.com",
+  "license": "MIT",
+  "homepage": "https://github.com/SeeMusic/vite-plugin-third-party-injector",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SeeMusic/vite-plugin-third-party-injector.git"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "tsup": "^8.1.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.12"
+  }
+}
