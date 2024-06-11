@@ -1,4 +1,4 @@
-# vite-plugin-third-party-injector
+# @kanjianmusic/vite-plugin-third-party-injector
 
 插入常见的第三方代码（比如谷歌统计）到 vite 项目的 index.html 中。目前支持：
 
@@ -10,13 +10,13 @@
 ## 安装
 
 ```
-npm install vite-plugin-third-party-injector -D
+npm install @kanjianmusic/vite-plugin-third-party-injector -D
 ```
 
 或
 
 ```
-pnpm install vite-plugin-third-party-injector -D
+pnpm install @kanjianmusic/vite-plugin-third-party-injector -D
 ```
 
 
@@ -26,7 +26,7 @@ pnpm install vite-plugin-third-party-injector -D
 
 ```
 import { defineConfig } from 'vite';
-import thirdPartyInjectorPlugin from 'vite-plugin-third-party-injector';
+import thirdPartyInjectorPlugin from '@kanjianmusic/vite-plugin-third-party-injector';
 
 export default defineConfig({
   plugins: [
