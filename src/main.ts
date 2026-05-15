@@ -1,13 +1,13 @@
 import type { HtmlTagDescriptor, Plugin } from 'vite';
 
 import generateClarityScript from './preset/clarity';
-import generateGtagScript from './preset/gtag';
+import generateGtagScript, { type GtagOptions } from './preset/gtag';
 import generateFbEventsScript from './preset/fbevents';
 import generateGtmScript from './preset/gtm';
 
-interface Options {
+export interface ThirdPartyInjectorOptions {
   clarity?: string;
-  gtag?: string;
+  gtag?: string | GtagOptions;
   fbevents?: string;
   gtm?: string;
 }
@@ -16,24 +16,42 @@ const pushScript = (source: HtmlTagDescriptor[], generate: (id: string) => HtmlT
   if (id) {
     source.push(...generate(id));
   }
-}
+};
 
-export default function thirdPartyInjectorPlugin(options?: Options): Plugin {
+const normalizeGtagOptions = (gtag?: string | GtagOptions): GtagOptions | undefined => {
+  if (!gtag) {
+    return undefined;
+  }
+
+  if (typeof gtag === 'string') {
     return {
-      name: '@kanjianmusic/vite-plugin-third-party-injector',
-      transformIndexHtml() {
-        const list: HtmlTagDescriptor[] = [];
-
-        if (!options) {
-          return [];
-        }
-
-        pushScript(list, generateGtagScript, options.gtag);
-        pushScript(list, generateGtmScript, options.gtm);
-        pushScript(list, generateClarityScript, options.clarity);
-        pushScript(list, generateFbEventsScript, options.fbevents);
-
-        return list;
-      }
+      id: gtag,
+      sendPageView: true
     };
   }
+
+  return {
+    id: gtag.id,
+    sendPageView: gtag.sendPageView ?? true
+  };
+};
+
+export default function thirdPartyInjectorPlugin(options: ThirdPartyInjectorOptions = {}): Plugin {
+  return {
+    name: '@kanjianmusic/vite-plugin-third-party-injector',
+    transformIndexHtml() {
+      const list: HtmlTagDescriptor[] = [];
+      const gtagOptions = normalizeGtagOptions(options.gtag);
+
+      if (gtagOptions?.id) {
+        list.push(...generateGtagScript(gtagOptions));
+      }
+
+      pushScript(list, generateGtmScript, options.gtm);
+      pushScript(list, generateClarityScript, options.clarity);
+      pushScript(list, generateFbEventsScript, options.fbevents);
+
+      return list;
+    }
+  };
+}
