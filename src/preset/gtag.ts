@@ -1,6 +1,16 @@
 import type { HtmlTagDescriptor } from 'vite';
 
-const generateGtagScript = (id: string): HtmlTagDescriptor[] => {
+export interface GtagOptions {
+  id: string;
+  sendPageView?: boolean;
+}
+
+const generateGtagScript = ({ id, sendPageView }: GtagOptions): HtmlTagDescriptor[] => {
+  const normalizedSendPageView = sendPageView ?? true;
+  const configLine = normalizedSendPageView
+    ? `gtag('config', '${id}');`
+    : `gtag('config', '${id}', { send_page_view: false });`;
+
   return [
     {
       tag: 'script',
@@ -16,11 +26,11 @@ const generateGtagScript = (id: string): HtmlTagDescriptor[] => {
         window.dataLayer = window.dataLayer || [];
         function gtag() { dataLayer.push(arguments); }
         gtag('js', new Date());
-        gtag('config', '${id}');
+        ${configLine}
       `,
       injectTo: 'head'
     },
-  ]
-}
+  ];
+};
 
 export default generateGtagScript;
