@@ -36,6 +36,8 @@ pnpm install @kanjianmusic/vite-plugin-third-party-injector -D
 
 `vite.config.ts` 配置示例：
 
+`gtag` 支持传字符串或配置对象；`gtm`、`clarity` 和 `fbevents` 直接传对应平台的 ID。
+
 ```
 import { defineConfig } from 'vite';
 import thirdPartyInjectorPlugin from '@kanjianmusic/vite-plugin-third-party-injector';
@@ -68,39 +70,57 @@ export default defineConfig(({ mode }) => {
 })
 ```
 
-如果你的 `vite.config.ts` 使用了基于 `mode` 的函数式配置，并且项目里还通过 Vitest 复用同一份 Vite 配置，`vitest.config.ts` 可能也需要同步调整；Vitest 默认更接近直接消费对象形式配置。
+仅当你的 `vite.config.ts` 使用了基于 `mode` 的函数式配置，并且项目里还通过 Vitest 复用同一份 Vite 配置时，`vitest.config.ts` 可能也需要同步调整；Vitest 默认更接近直接消费对象形式配置。
 
 ## 平台说明
 
 ### GA4 与 SPA
 
-Google Analytics 4 现在支持自动页面浏览统计，单页应用场景下也可以结合 Enhanced Measurement 的 history change 能力工作。可参考官方文档：
+**默认模式**
+
+Google Analytics 4 现在支持 SPA 页面浏览统计。如果项目没有额外需求，例如不需要自定义发送给 GA 的页面标题等 meta 信息，通常可由本插件注入基础 gtag snippet，并在 GA4 后台开启 Enhanced Measurement 中基于 browser history 的页面变化统计。可参考官方文档：
 
 * [Measure pageviews](https://developers.google.com/analytics/devguides/collection/ga4/views)
 * [Measure single-page applications](https://developers.google.com/analytics/devguides/collection/ga4/single-page-applications)
 
-如果你的项目需要更精确地控制页面浏览上报，例如依赖业务路由标题、页面路径、上报时机，或需要避免自动统计与手动统计重复，可以使用 `gtag.sendPageView: false` 关闭默认 pageview，并在业务代码中自行处理路由切换后的上报。例如：
+GA4 后台入口：
+
+* `Admin` -> `Data collection and modification` -> `Data streams` -> 选择对应 Web stream -> `Enhanced measurement`
+
+**手动模式**
+
+如果项目需要自行控制页面浏览上报，例如依赖业务路由标题、自定义页面路径、精确控制上报时机，可以改用手动模式，常见做法是在路由切换后通过 `afterEach()` 手动发送 `page_view`。
+
+在默认配置下，通常同时存在两层自动页面浏览能力：
+
+* 代码侧：gtag 默认自动发送 `page_view`
+* 后台侧：Enhanced Measurement 基于 browser history 的页面变化统计
+
+改用手动模式后，通常有两个常见问题：
+
+* 如果不关闭这些默认自动行为，自动与手动 `page_view` 可能重复
+* 如果关闭了默认自动 `page_view`，只依赖 `afterEach()`，首屏首次打开时的 `page_view` 可能遗漏
+
+因此，手动模式下通常需要先关掉代码侧自动 `page_view` 和后台基于 history 的自动页面变化统计，再补上首屏首次打开时的那次 `page_view`。对应到接入上，通常需要同时做三件事：
+
+* 使用 `gtag.sendPageView: false` 关闭默认自动 `page_view`
+* 在 GA4 后台关闭 `Enhanced measurement` 中 `Page views` 的高级设置 `Page changes based on browser history events`
+* 在业务路由入口中补发首屏 `page_view`，例如通过 `router.isReady()` 处理首屏，通过 `router.afterEach()` 处理后续客户端导航
+
+插件配置示例：
 
 ```
-export default defineConfig(({ mode }) => {
-  const isProd = mode === 'production';
-
-  return {
-    plugins: [
-      thirdPartyInjectorPlugin({
-        gtag: isProd
-          ? {
-              id: 'G-XXXXXXXXXX',
-              sendPageView: false,
-            }
-          : undefined,
-      }),
-    ],
-  };
+export default defineConfig({
+  plugins: [
+    thirdPartyInjectorPlugin({
+      gtag: {
+        id: 'G-XXXXXXXXXX',
+        sendPageView: false,
+      },
+    }),
+  ],
 })
 ```
-
-在手动模式下，还应检查 GA4 后台的 Enhanced Measurement 配置；如果启用了基于 browser history 的页面变化统计，SPA 项目可能同时触发自动和手动 `page_view`，导致重复上报。
 
 如果你的项目需要更完整的框架集成能力，例如自动处理 Vue 路由切换、统一封装埋点调用、提供组合式 API 或组件级能力，优先考虑使用对应生态中的专用插件，例如 `vue-gtag` 一类方案。
 

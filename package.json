@@ -1,6 +1,6 @@
 {
   "name": "@kanjianmusic/vite-plugin-third-party-injector",
-  "version": "8.0.1",
+  "version": "8.0.2",
   "type": "module",
   "description": "Vite plugin for injecting third-party scripts into HTML files, such as gtag, gtm, etc.",
   "scripts": {
